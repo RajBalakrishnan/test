@@ -1,0 +1,59 @@
+Calculated results: Calc 1: Label ratio = X / Y where X = LANCE Eu/APC Dual 662(1) channel 1 window 1,Y = LANCE Eu/APC Dual 662(1) channel 2 window 1
+	01	02	03	04	05	06	07	08	09	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	
+A																									
+B																									
+C																									
+D																									
+E																									
+F																									
+G																									
+H																									
+I																									
+J																									
+K																									
+L																									
+M																									
+N																									
+O																									
+P	0.0893	0.0944	0.0963	0.0943	0.0938	0.1063	0.1228	0.1238	0.1994	0.2069	0.6503	0.5892	1.2597	1.1687	1.5876	1.4501	1.4822	1.5366	1.6143	1.4316	1.6062	1.5837	1.6971	1.5524	
+
+Results for LANCE Eu/APC Dual 662(1) - channel 1 window 1 (Counts)
+	01	02	03	04	05	06	07	08	09	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	
+A																									
+B																									
+C																									
+D																									
+E																									
+F																									
+G																									
+H																									
+I																									
+J																									
+K																									
+L																									
+M																									
+N																									
+O																									
+P	277	293	278	303	298	334	373	386	630	654	2027	1892	4414	4211	5674	5757	6172	6071	6299	6093	6513	6124	6600	6115	
+
+Results for LANCE Eu/APC Dual 662(1) - channel 2 window 1 (Counts)
+	01	02	03	04	05	06	07	08	09	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	
+A																									
+B																									
+C																									
+D																									
+E																									
+F																									
+G																									
+H																									
+I																									
+J																									
+K																									
+L																									
+M																									
+N																									
+O																									
+P	3101	3103	2888	3213	3178	3143	3038	3119	3160	3161	3117	3211	3504	3603	3574	3970	4164	3951	3902	4256	4055	3867	3889	3939	
+
+
+Exported with EnVision Workstation version 1.12
