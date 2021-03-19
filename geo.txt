@@ -1,0 +1,215 @@
+library(shiny)
+library(RCurl)
+library(data.table)
+library(stringr)
+library(DT)
+library(dplyr)
+options(shiny.maxRequestSize = 30*1024^2)
+
+ui <- shinyUI(fluidPage(tags$head(tags$style(HTML("hr {border-top: 1px solid #000000;}"))),
+        title = "GEO Data Processing",
+        titlePanel(tags$img(src = 'title.png', height = 80, width = 630)),
+        sidebarLayout(sidebarPanel(
+          selectInput("GSEID","Enter GSE Id", choices = c("GSE3365","GSE42296","GSE58558","GSE59294","GSE75890","GSE65832","GSE32924","GSE60481",
+                                                          "GSE63741","GSE60709","GSE57225","GSE36842","GSE32924","GSE16161","GSE6012","GSE5667",
+                                                          "GSE27887","GSE32473","GSE73721"), selected = "GSE16161", multiple = F),
+          textInput("GSEID2","Enter GSE Id if not in the list above", "", placeholder = "Enter GSE Id"),
+          actionButton("process", "Get Data", style = "color: #fff; background-color: FORESTGREEN; border-color: #2e6da4"),
+          tags$br(),tags$br(),tags$br(),tags$br(),hr(),
+          
+          h5(strong(span("Optional feature:",style = "color:brown"))),
+          selectInput(inputId = "OldColumnName", label = "Select Column Name to rename",multiple = F, choices = c("Nil"), selected = ""),
+          textInput(inputId = "NewColumnName", label = "Select the New Column Name", "Nil"),
+          actionButton("RenameColumn", "Rename Column",style = "color: #fff; background-color: SADDLEBROWN; border-color: #2e6da4"),
+          tags$br(),tags$br(),
+          p(h5(strong(span("Note", style = "color:blue"), span(": ", style = "color:black")),
+               span("As the ", style = "color:black"), strong(span("!Sample_characteristics_ch1", style = "color:red")), 
+               span("value(s) differ between GSEIDs, the user is requested to rename Column(s) as appropriate.",style = "color:black"),
+               br(), br(), 
+               span("For example some column headers can be renamed as shown below:", style = "color:black"),br(),br(),  
+               strong(span("'condition' << to >> 'Disease',", style = "color:black")), br(),br(), 
+               strong(span("'tissue' << to >>  'Biomaterial',", style = "color:black")), br(),br(), 
+               strong(span("'inidvidual' << to >>  'Patient.number' etc.", style = "color:black"))
+          )), #p and h5 ends here
+          hr(),tags$br(),tags$br(), tags$br(),tags$br(),tags$br(),tags$br(), tags$br(),
+          width = 2), # sidebarPanel ends here
+          
+          mainPanel(wellPanel(
+            tabsetPanel(type = "pills",  
+                        tabPanel("Parsed GEO Data", 
+                                 tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+                                 tags$script(type = "text/javascript", src = "busy.js"),
+                                 DT::dataTableOutput("ResultsTable1", width = "auto", height = "auto"),
+                                 div(class = "busy", p(span(h4(strong("GEO Data is being fetched. Please wait...!"), style = "color:brown"))), 
+                                     img(src = "Processing.gif"))
+                                 ,style = "overflow-y:scroll;  max-height: 900px; font-size: 100%"),
+                        tabPanel("Processed GEO Data", 
+                                 tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+                                 tags$script(type = "text/javascript", src = "busy.js"),
+                                 DT::dataTableOutput("ResultsTable2", width = "auto", height = "auto"),
+                                 div(class = "busy", p(span(h4(strong("GEO Data is being fetched. Please wait...!"), style = "color:brown"))), 
+                                     img(src = "Processing.gif"))
+                                 ,style = "overflow-y:scroll;  max-height: 900px; font-size: 100%") 
+            ))) # sidebarPanel ends here
+  ))) # UI ends here
+
+server <- function(input,session, output){ #session$onSessionEnded(stopApp)
+readURL <- function(URL, n=-1L) {
+  tries <- 0L
+  msg <- character()
+  while (tries < 3L & !exists("URLdata")) {
+    URLdata <- tryCatch({
+      readLines(URL, n)
+    }, error = function(e) {
+      msg <<- conditionMessage(e)
+      tries <<- tries + 1L
+    })
+  }
+  if (tries == 3L)
+    stop("failed to get URL after 3 tries:",
+         "\n  url: ", URL,
+         "\n  error: ", msg)
+  URLdata
+}
+
+  store <- reactiveValues()
+  observeEvent(input$process, {
+    if (is.null(input$GSEID) | is.null(input$GSEID2)) return()
+    if (str_length(input$GSEID2) > 3) {GSEIDval = input$GSEID2} 
+    if (str_length(input$GSEID2) < 3) {GSEIDval = input$GSEID}
+    geoDF <- NULL
+    for (GEO.study.ID in GSEIDval) {
+      GEO.study.ID <- toupper(GEO.study.ID)
+      sampledata <- readURL(paste0("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=",GEO.study.ID,"&targ=gsm&form=text&view=brief"))
+      SampSrchNum <- grep("\\^SAMPLE",sampledata)
+      TestCharacteristics <- grep("\\!Sample_characteristics_ch1",sampledata)
+	  TestData_processing <- grep("\\!Sample_data_processing",sampledata)
+	  TestExtract_protocol <- grep("\\!Sample_extract_protocol_ch1",sampledata)
+	  TestSample_relation <- grep("\\!Sample_relation",sampledata)
+      RD <- data.frame(sampledata)
+      RD <-  as.data.frame(str_split_fixed(RD$sampledata, "=", 2))
+      us = unstack(RD, V2 ~ V1)
+      PreProscessedData <- data.frame(lapply(us, `length<-`, max(lengths(us))))
+      PPDcolnames <- gsub("[^0-9A-Za-z_///' ]", "", colnames(PreProscessedData ))
+      PPDcolnames <- gsub("^X", "", PPDcolnames)
+      #PPDcolnames <- gsub("_ch1", "", PPDcolnames)
+      colnames(PreProscessedData) <- PPDcolnames
+      if (length(TestCharacteristics) >= 1) 
+      {PreProscessedData$Sample_characteristics_ch1 <- gsub("_", ";", PreProscessedData$Sample_characteristics_ch1)}
+      RD1 <- NULL
+      us <- NULL
+      for (i in 1:length(SampSrchNum)) {
+        if (i == length(SampSrchNum)) {
+          singlesample <- sampledata[SampSrchNum[i]:length(sampledata)]
+        } else {
+          singlesample <- sampledata[SampSrchNum[i]:(SampSrchNum[i + 1] - 1)]
+        }
+        GEO.sample.ID <- sub("\\^SAMPLE = ","",singlesample[1])
+        Sample.title <- sub("!Sample_title = ","",singlesample[grep("Sample_title",singlesample)])
+        if (length(grep("library",singlesample)) == 0) { samptype <- "array"} 
+        else {Sample.Type <- sub("!Sample_library_strategy = ","",singlesample[grep("Sample_library_strategy",singlesample)])}
+        Sample.Source <- paste0(sub("!Sample_source_name_ch1 = ","",singlesample[grep("Sample_source_name_ch1",singlesample)]),collapse = "; ")
+        Sample.Description <- paste0(sub("!Sample_description = ","",singlesample[grep("Sample_description",singlesample)]),collapse = "; ")
+        Organism <- paste0(sub("!Sample_organism_ch1 = ","",singlesample[grep("Sample_organism_ch1",singlesample)]),collapse = "; ")
+        
+		if (length(TestCharacteristics) >= 1) 
+			{Sample.Characteristics <- paste0(sub("!Sample_characteristics_ch1 = "," ", singlesample[grep("Sample_characteristics_ch1",singlesample)]),collapse = "; ")}
+		
+		if (length(TestData_processing) >= 1) 
+			{Sample.Data_Processing <- paste0(sub("!Sample_data_processing = "," ", singlesample[grep("Sample_data_processing",singlesample)]),collapse = "; ")}
+
+		if (length(TestSample_relation) >= 1) 
+			{Sample.Relation <- paste0(sub("!Sample_relation = "," ", singlesample[grep("Sample_relation",singlesample)]),collapse = "; ")}
+
+		if (length(TestExtract_protocol) >= 1) 
+			{Sample.Extract.Protocol <- paste0(sub("!Sample_extract_protocol_ch1 = ","", singlesample[grep("Sample_extract_protocol_ch1",singlesample)]),collapse = "; ")}
+       
+    Type <- paste0(sub("!Sample_molecule_ch1 = ","",singlesample[grep("Sample_molecule_ch1",singlesample)]),collapse = "; ")
+    Sample.Platform.Id <- paste0(sub("!Sample_platform_id = ","" ,singlesample[grep("Sample_platform_id",singlesample)]),collapse = "; ")
+    if (length(TestCharacteristics) >= 1)
+    {geoDF <- data.frame(rbind(geoDF,cbind(GEO.study.ID,GEO.sample.ID,Sample.Platform.Id, Sample.title, Type,Sample.Relation,
+    				Sample.Extract.Protocol, Organism,Sample.Source, Sample.Characteristics,Sample.Data_Processing)))}
+    if (length(TestCharacteristics) == 0)
+    {geoDF <- data.frame(rbind(geoDF,cbind(GEO.study.ID,GEO.sample.ID,Sample.Platform.Id, Sample.Description,
+    																			 Sample.title, Sample.Source, Type, Organism)))}
+      }
+	  
+      if (length(TestCharacteristics) >= 1) 
+      {geoDF$Sample.Characteristics <- gsub("SCORAD:", "SCORAD -", geoDF$Sample.Characteristics )
+       geoDF$Sample.Characteristics <- gsub("_", ";", geoDF$Sample.Characteristics)
+        PreProscessedData <- subset(PreProscessedData, select = -Sample_characteristics_ch1)
+      PreProscessedData <- PreProscessedData[!is.na(PreProscessedData$Sample_channel_count), ]}
+      
+      Testcolon <- grep(":",as.character(geoDF$Sample.Characteristics))
+      Numofcolon <- str_count(geoDF$Sample.Characteristics[1],":")
+      Numofsemicolon <- str_count(geoDF$Sample.Characteristics[1],";")
+      if (length(TestCharacteristics) >= 1) {
+        if (Numofsemicolon == (Numofcolon - 1)) {
+          if (length(Testcolon) >= 1) {
+            geoDF$Sample.Characteristics <- gsub(":", "=", geoDF$Sample.Characteristics)
+            x <- strsplit(as.character(geoDF$Sample.Characteristics), ";|= ")
+            a <- function(x){name <- x[seq(1, length(x), 2)]
+              value <- x[seq(2, length(x), 2)]
+              tmp <- transpose(as.data.table(value))
+              names(tmp) <- gsub(" ","",name)
+              return(tmp)}
+            x <- lapply(x, a)
+            x <- rbindlist(x, fill = TRUE)
+            substr(colnames(x), 1, 1) <- toupper(substr(colnames(x), 1, 1))
+            geoDF <- data.frame(cbind(geoDF,x))
+            geoDF <- subset(geoDF, select = -Sample.Characteristics)
+            store$df0 <- geoDF
+            colnames(x) <- paste0("Sample_characteristics_ch1_", colnames(x), sep = "")
+			  PreProscessedData$Sample_relation <- geoDF$Sample.Relation
+			  PreProscessedData$Sample_data_processing <- geoDF$Sample_Data_Processing
+	          PreProscessedData$Sample_extract_protocol_ch1 <- geoDF$Sample_Extract_Protocol
+			  store$PPD <- data.frame(cbind(PreProscessedData,x))
+          }}
+        
+        if (length(Testcolon) == 0 | Numofsemicolon != (Numofcolon - 1)) 
+             {geoDF$Sample_characteristics_ch1 <- geoDF$Sample.Characteristics; geoDF <- subset(geoDF, select = -Sample.Characteristics)
+              PreProscessedData$Sample_characteristics_ch1 <- geoDF$Sample.Characteristics; 
+			  store$df0 <- geoDF; 
+			  PreProscessedData$Sample_relation <- geoDF$Sample.Relation
+			  PreProscessedData$Sample_data_processing <- geoDF$Sample_Data_Processing
+	          PreProscessedData$Sample_extract_protocol_ch1 <- geoDF$Sample_Extract_Protocol
+			  store$PPD <- PreProscessedData}
+      }
+      if (length(TestCharacteristics) == 0) {store$df0 <- geoDF
+			  PreProscessedData$Sample_relation <- geoDF$Sample.Relation
+			  PreProscessedData$Sample_data_processing <- geoDF$Sample_Data_Processing
+	          PreProscessedData$Sample_extract_protocol_ch1 <- geoDF$Sample_Extract_Protocol
+	  store$PPD <- PreProscessedData
+	  }
+    }
+  })
+  
+  
+  observeEvent(store$df0, {
+    updateSelectInput(session, "OldColumnName", choices = colnames(store$df0), selected = NULL)
+  })
+  
+  observeEvent(input$RenameColumn, {
+    req(input$NewColumnName, input$OldColumnName)
+    if (input$NewColumnName != "Nil") {
+      colnames(store$df0)[colnames(store$df0) == input$OldColumnName] <- input$NewColumnName
+    }
+  })
+  
+  
+  #write.csv(geoDF,paste0(input$GSEID,".csv",sep = ""), row.names = F)
+  output$ResultsTable1 <- DT::renderDataTable({ 
+    req(store$PPD)
+    DT::datatable(store$PPD, extensions = c('ColReorder', 'Buttons'),
+                  options = list(pageLength = length(store$PPD$Sample_channel_count),colReorder = TRUE,
+                                 deferRender = TRUE,  scrollY = "750px", scrollX = TRUE, buttons = c('excel', 'csv'), dom = 'Bft'))
+  })
+  output$ResultsTable2 <- DT::renderDataTable({ 
+    req(store$df0)
+    DT::datatable(store$df0, extensions = c('ColReorder', 'Buttons'),
+                  options = list(pageLength = length(store$df0$GEO.sample.ID),colReorder = TRUE,
+                                 deferRender = TRUE,  scrollY = "750px", scrollX = TRUE, buttons = c('excel', 'csv'), dom = 'Bft'))
+  })
+}
+
+shinyApp(ui = ui, server = server)
