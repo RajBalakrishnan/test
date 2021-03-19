@@ -1,0 +1,109 @@
+#parse excel sheet from Brandon Toyama for CC90009
+library(xlsx)
+library(reshape2)
+
+args = commandArgs(trailingOnly=TRUE)
+fn <- args[1] #'90009_864_combo.xlsx'
+wb <- loadWorkbook("90009_864_combo.xlsx")
+sheets <- getSheets(wb)
+sheetsNames <- sort(names(sheets))
+
+#there is a single sheet with data
+#
+#there are 2 compounds, 3 cell lines (MDA, CRBNKO, GN)
+#2 replicates per cell line
+
+# replicate 1: start column 3, end 13, single agent is on column 13
+# replicate 2: start column 14, end 24 , single agent is on column 14
+
+# rows per cell line:
+# MDA: start 3, end 13
+# CRBNKO: start 18, end 28
+# GN: start 33, end 43
+
+
+doses<-list()
+doses[['CC2001864']] <- c(10, 3.370534042, 1.123006663, 0.374279512, 0.124753612, 0.0412, 0.0138866, 0.004626787,0.001542032, 0.000513985, 0) #uM column compound
+doses[['CC90009']] <- c(0, 10, 3.33, 1.11, 0.37, 0.123, 0.041, 0.0137, 0.0045, 0.0015, 0.0005) #uM row compound (compound with concentration changing along rows, ie single agent DRC sits on a single column)
+
+sheetName <- 'Sheet1'
+data <- list()
+cellLine <- 'MDA'
+startRo = 3
+startCo = 3
+
+#replicate 1
+data[[paste0('CC90009_CC2001864_', cellLine, '_1')]] <- readRows(sheets[[sheetName]],
+                                                            startColumn = startCo, endColumn = startCo +10,
+                                                            startRow = startRo, endRow = startRo +10)
+#replicate 2
+startCo = 14
+data[[paste0('CC90009_CC2001864_', cellLine, '_2')]] <- readRows(sheets[[sheetName]],
+                                                            startColumn = startCo, endColumn = startCo +10,
+                                                            startRow = startRo, endRow = startRo +10)
+
+
+cellLine <- 'CRBNKO'
+startRo = 18
+startCo = 3
+
+#replicate 1
+data[[paste0('CC90009_CC2001864_', cellLine, '_1')]] <- readRows(sheets[[sheetName]],
+                                                            startColumn = startCo, endColumn = startCo +10,
+                                                            startRow = startRo, endRow = startRo +10)
+#replicate 2
+startCo = 14
+data[[paste0('CC90009_CC2001864_', cellLine, '_2')]] <- readRows(sheets[[sheetName]],
+                                                            startColumn = startCo, endColumn = startCo +10,
+                                                            startRow = startRo, endRow = startRo +10)
+cellLine <- 'GN'
+startRo = 33
+startCo = 3
+
+#replicate 1
+data[[paste0('CC90009_CC2001864_', cellLine, '_1')]] <- readRows(sheets[[sheetName]],
+                                                            startColumn = startCo, endColumn = startCo +10,
+                                                            startRow = startRo, endRow = startRo +10)
+#replicate 2
+startCo = 14
+data[[paste0('CC90009_CC2001864_', cellLine, '_2')]] <- readRows(sheets[[sheetName]],
+                                                            startColumn = startCo, endColumn = startCo +10,
+                                                            startRow = startRo, endRow = startRo +10)
+
+#parse a matrix into a column data set
+report <- c()
+
+for(expCode in names(data)) {
+  mat<- as.matrix(data[[expCode]])
+  info <- unlist(strsplit(x = expCode, split = '_', fixed=T))
+  cmp1 <- info[1]
+  cmp2 <- info[2]
+  cellLine <- info[3]
+  replicate <- info[4]
+
+  if(2 == replicate) {
+    sa <- mat[ ,1]
+    mat <- mat[, -1]
+    mat <- cbind(mat, sa)
+  }
+
+  mat <- apply(X = mat, MARGIN = 2, FUN = as.numeric)
+  #set concentrations as names
+  rownames(mat) <- doses[[cmp1]]
+  colnames(mat) <- doses[[cmp2]]
+  rawmat <- mat
+
+  #normalize
+  #mat <- 100 *  mat / mat[1,1] # data appears already normalized
+  ssf  <- melt(mat, varnames <- c('CC90009', 'CC2001864'))
+  ssf <- cbind(cmp1, cmp2, ssf, replicate, cellLine)
+  colnames(ssf) <- c('cpd1', 'cpd2', 'd1', 'd2', 'effect', 'replicate', 'cellLine') #cellLine could be called 'experiment' and hold other experimental conditions
+  report <- rbind(report, ssf)
+}
+print(report)
+write.csv(report, 'combos.csv', quote=F, row.names = F)
+
+data$CC90009_CC2001864_MDA_1
+#Rscript 
+
+##Rscript 1_parseDataInExcelSpreadsheet.R 90009_864_combo.xlsx
