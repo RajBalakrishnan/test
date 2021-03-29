@@ -1,0 +1,24 @@
+[Use CAUTION when opening links/attachments]
+
+Dear Researcher,
+
+The data you requested from UK Biobank (Application 26041, Basket 2012384) is now ready for you to download. To access standard tabular data, please:
+
+1. Login to the Application Management System at https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fbbams.ndph.ox.ac.uk%2Fams%2F&amp;data=04%7C01%7Crajkumar.balakrishnan%40bms.com%7C91da1f4b640c49c89e1a08d8eeeed899%7C71e34cb83a564fd5a2594acadab6e4ac%7C0%7C0%7C637522056894852528%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C1000&amp;sdata=PStnaRIeVUfCaTpsOXScXY6olprdGOHPot9JV84ussw%3D&amp;reserved=0
+2. Go to the Projects section for your Application 26041 and click on the Data Tab then the "Go to Showcase download page" button.
+3. On the Downloads page of the UKB Showcase, go to the Dataset Tab and click on the entry with ID 46139; 4. Enter the MD5 checksum for the data (see below) and click Generate; 5. On the following screen, click Fetch to download the data.
+
+MD5 checksum: 5a630b1d65581f9ca48187fb32361b70
+
+To use the downloaded data you will need to decrypt it and convert it to one of the available formats. The File Handlers Tab on the Downloads page gives links to the programs you will need for this. Your password is in the attached file k26041r46139.key
+
+Please note that this download will expire and become unavailable one year after the date it was created.
+
+A guide explaining the process in more detail is available at https://nam02.safelinks.protection.outlook.com/?url=http%3A%2F%2Fbiobank.ctsu.ox.ac.uk%2Fukb%2Fexinfo.cgi%3Fsrc%3DAccessingData&amp;data=04%7C01%7Crajkumar.balakrishnan%40bms.com%7C91da1f4b640c49c89e1a08d8eeeed899%7C71e34cb83a564fd5a2594acadab6e4ac%7C0%7C0%7C637522056894852528%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C1000&amp;sdata=LH2xttYXNEnhezM%2BSi1kD2EdazdZQMF8Gy7ahSLRwfo%3D&amp;reserved=0. If this address does not appear as a link then please copy it into your web browser. This guide may also be downloaded directly from within the showcase.
+
+If you encounter any problems, please contact UK Biobank for assistance and quote Application ID 26041 and Run ID 46139. Do not include the MD5 checksum or password file in any communications with UK Biobank unless you are explicitly asked to do so.
+
+This email contains confidential information and must not be forwarded or shared in any way.
+
+The UK Biobank Team
+https://nam02.safelinks.protection.outlook.com/?url=http%3A%2F%2Fwww.ukbiobank.ac.uk%2F&amp;data=04%7C01%7Crajkumar.balakrishnan%40bms.com%7C91da1f4b640c49c89e1a08d8eeeed899%7C71e34cb83a564fd5a2594acadab6e4ac%7C0%7C0%7C637522056894852528%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C1000&amp;sdata=cy9JbLg6aNrUJxOGVohu0tG5Lt0ifgfXm4HZK9bwa%2FQ%3D&amp;reserved=0
